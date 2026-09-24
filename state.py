@@ -32,6 +32,8 @@ class PipelineState(TypedDict, total=False):
     validation_passed: bool
     validation_errors: List[str]
 
+    publish_result: Dict[str, Any]
+
     # ---- Runner output ----
     run_result: Dict[str, Any]
 

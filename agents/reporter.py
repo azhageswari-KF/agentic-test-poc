@@ -16,6 +16,7 @@ REPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "reports"
 def reporter_node(state: PipelineState) -> PipelineState:
     scenarios = state.get("scenarios", [])
     run_result = state.get("run_result", {})
+    publish_result = state.get("publish_result", {})
 
     lines = [
         f"# Test Run Report",
@@ -38,6 +39,16 @@ def reporter_node(state: PipelineState) -> PipelineState:
         lines.append(f"- Errors: {state['validation_errors']}")
     if state.get("feature_path"):
         lines.append(f"- Feature file: `{state['feature_path']}`")
+
+    lines += [
+        "", 
+        "## Publisher output", 
+        f"- Status: **{publish_result.get('status')}**"
+    ]
+    if publish_result.get("pr_url"): 
+        lines.append(f"- PR: {publish_result['pr_url']}")
+    if publish_result.get("reason"): 
+        lines.append(f"- Reason: {publish_result['reason']}")
 
     lines += [
         "",

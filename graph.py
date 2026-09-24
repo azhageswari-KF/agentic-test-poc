@@ -12,20 +12,19 @@ from agents.planner import planner_node
 from agents.creator import creator_node
 from agents.runner import runner_node
 from agents.reporter import reporter_node
-
+from agents.publisher import publisher_node
 
 def build_graph():
     graph = StateGraph(PipelineState)
-
     graph.add_node("planner", planner_node)
     graph.add_node("creator", creator_node)
+    graph.add_node("publisher", publisher_node)
     graph.add_node("runner", runner_node)
     graph.add_node("reporter", reporter_node)
-
     graph.set_entry_point("planner")
     graph.add_edge("planner", "creator")
-    graph.add_edge("creator", "runner")
+    graph.add_edge("creator", "publisher")
+    graph.add_edge("publisher", "runner")
     graph.add_edge("runner", "reporter")
     graph.add_edge("reporter", END)
-
     return graph.compile()

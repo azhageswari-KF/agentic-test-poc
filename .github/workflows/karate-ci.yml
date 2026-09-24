@@ -1,0 +1,64 @@
+name: Karate CI
+on:
+  pull_request:
+    branches: [main]
+    paths: ["karate/features/**"]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Karate tag expression"
+        default: "@component,@regression"
+
+jobs:
+  scoped-run:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment: test-execution   # <- pauses for human approval before running
+    strategy:
+      matrix:
+        include:
+          - {role: worker, platform: mobile}
+          - {role: supervisor, platform: web}
+          - {role: supervisor, platform: mobile}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - run: mvn -q test -Dkarate.options="--tags @${{ matrix.role }}-${{ matrix.platform }}"
+
+  full-regression:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - {role: worker, platform: mobile}
+          - {role: supervisor, platform: web}
+          - {role: supervisor, platform: mobile}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - run: mvn -q test -Dkarate.options="--tags @regression,@${{ matrix.role }}-${{ matrix.platform }}"
+
+  nightly-full-suite:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - run: mvn -q test
+
+  manual-scoped-run:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - run: mvn -q test -Dkarate.options="--tags ${{ github.event.inputs.tags }}"

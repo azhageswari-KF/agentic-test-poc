@@ -9,8 +9,8 @@ Creator generates any code, since every downstream agent inherits it.
 
 import json
 import re
-from llm import get_llm
 from state import PipelineState
+from llm import get_llm, get_text   # add get_text here
 
 SYSTEM_PROMPT = """You are a QA test planner. Given a user story and a target
 application URL, break it into concrete test scenarios.
@@ -30,8 +30,6 @@ fields outside this schema."""
 
 
 def _fallback_scenarios(jira_ticket: str) -> list:
-    """Used only if the model doesn't return parseable JSON, so the POC
-    never hard-crashes on a flaky local model response."""
     return [
         {
             "id": "TS-1",
@@ -56,7 +54,8 @@ def planner_node(state: PipelineState) -> PipelineState:
     llm = get_llm()
     prompt = f"{SYSTEM_PROMPT}\n\nUser story:\n{state['jira_ticket']}\n\nTarget URL:\n{state['target_url']}"
 
-    raw = llm.invoke(prompt).content.strip()
+    # raw = llm.invoke(prompt).content.strip()
+    raw = get_text(llm.invoke(prompt)).strip()
     # Strip accidental markdown fences before parsing
     cleaned = re.sub(r"^```(json)?|```$", "", raw, flags=re.MULTILINE).strip()
 
